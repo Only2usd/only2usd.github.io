@@ -317,7 +317,7 @@ function tick(){
 setInterval(tick, 1000); tick();
 (function(){
   const t = new Date((next || nextSunday17()) * 1000);
-  const s = t.toLocaleString(undefined, {weekday:"long", hour:"2-digit", minute:"2-digit", timeZoneName:"short"});
+  const s = t.toLocaleString("en-US", {weekday:"long", hour:"2-digit", minute:"2-digit", hour12:false, timeZoneName:"short"});
   $("localTime").textContent = "Draws run every Sunday 17:00 UTC, which is " + s + " where you are.";
 })();
 
