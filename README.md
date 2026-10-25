@@ -20,7 +20,7 @@ Website: https://only2usd.com
 | Network | Address | Status |
 |---|---|---|
 | Base Sepolia (testnet) | `0x9041e577b2239a0757Bf15c699146881317b39c4` | testing |
-| Base (mainnet) | — | not deployed yet |
+| Base (mainnet) | `0x236dEA4ceD151C68cdE2D63f8C468Bc83f5f1Bb7` | live |
 
 Source: [`Only2USD.sol`](./Only2USD.sol). Verified source on Basescan matches this file.
 

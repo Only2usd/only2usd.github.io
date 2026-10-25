@@ -224,11 +224,23 @@ footer{margin-top:40px; font-size:14px; color:var(--ink-2)}
 </section>
 
 <section>
+  <h2>Without this website</h2>
+  <p>You never have to connect your wallet to this site. A ticket is a transaction your wallet signs, so some wallet is always involved; but you can sign it on Basescan, with no website of ours in between.</p>
+  <ol class="steps">
+    <li>Open the USDC contract on Basescan, pick “Write as Proxy” and connect your wallet to Basescan. Call <b>approve</b>: spender = our contract address, value = 2000000 per ticket (USDC has 6 decimals, so 2000000 = 2 USDC).</li>
+    <li>Open our contract on Basescan, pick “Write Contract”, connect, and call <b>buyTickets</b> with the number of tickets you want. That’s it; your tickets are in.</li>
+    <li>To support the pool without playing, approve any amount the same way and call <b>sponsor</b> instead.</li>
+    <li>To run the draw yourself once it is due (Sunday 17:00 UTC or later): open our contract, “Write Contract”, connect, and call <b>draw</b> with 0 in the payable field. The contract pays the randomness fee from its own ETH. Whoever calls first triggers that week’s draw; nobody needs to wait for us.</li>
+  </ol>
+  <p><strong>Sending USDC straight to the contract address does not buy a ticket.</strong> A plain transfer has no way to tell the contract who sent it or how many tickets to create, so it is treated as a sponsorship: it joins the pool, earns nothing and cannot be returned. Any token other than USDC is lost.</p>
+</section>
+
+<section>
   <h2>Past draws</h2>
   <div class="tablewrap">
     <table>
       <thead><tr><th>Draw</th><th>Winner</th><th>Prize</th><th>Proof</th></tr></thead>
-      <tbody id="draws"><tr><td colspan="4" class="muted">Connect a wallet to load draws.</td></tr></tbody>
+      <tbody id="draws"><tr><td colspan="4" class="muted">Loading…</td></tr></tbody>
     </table>
   </div>
   <div style="margin-top:14px; display:flex; gap:10px; flex-wrap:wrap">
@@ -243,7 +255,9 @@ footer{margin-top:40px; font-size:14px; color:var(--ink-2)}
   <details><summary>Can the developer take the pool?</summary><p>No. The owner can only lower the developer share, change the address that receives it, and withdraw the small amount of ETH kept for randomness fees. There is no function to move USDC out of the pool.</p></details>
   <details><summary>What are my odds?</summary><p>Each ticket has one chance in the number of tickets in play, every week, until it wins. More tickets in play means a bigger pool and lower odds per ticket, like any lottery.</p></details>
   <details><summary>What if I send the wrong amount or the wrong token?</summary><p>The contract only accepts whole tickets of 2 USDC. USDC sent directly to the address without using the buy function is added to the pool as a sponsorship and cannot be returned. Other tokens are lost.</p></details>
+  <details><summary>How do I get USDC and ETH on Base?</summary><p>The easiest route is Coinbase: buy USDC and a little ETH, then withdraw each and choose the <b>Base</b> network. Most other exchanges (Binance, Kraken, OKX) also offer Base as a withdrawal network. If your funds sit on another chain, a bridge such as Relay, Jumper or Across can move them to Base in a minute. You need roughly 2 USDC per ticket plus about a dollar of ETH for fees.</p></details>
   <details><summary>Why do I need ETH too?</summary><p>Base charges a tiny fee for every transaction, paid in ETH. A few cents’ worth is enough for several purchases.</p></details>
+  <details><summary>Is connecting my wallet safe?</summary><p>Connecting only lets this page see your address and show your tickets; it cannot move funds. Money moves only when you approve two things in your wallet: a USDC allowance for the exact ticket amount, and the purchase itself. We never ask for an unlimited allowance. If you prefer, you can skip this page entirely and buy straight from the contract on Basescan.</p></details>
   <details><summary>Can I sell or move my tickets?</summary><p>No. A ticket belongs to the wallet that bought it and stays there until it wins. Keep access to that wallet.</p></details>
   <details><summary>Could Pyth or the developer pick the random number?</summary><p>The random number is requested after the ticket list is frozen and delivered by Pyth Entropy in a separate transaction. It combines a secret Pyth commits to in advance with data neither side controls, and the result is published on-chain with the draw. The contract simply takes that number modulo the ticket count. There is no step where a person chooses.</p></details>
   <details><summary>Why Base?</summary><p>Transactions cost a fraction of a cent, USDC is native there, and most wallets and exchanges, including Coinbase, support it directly.</p></details>
@@ -255,7 +269,7 @@ footer{margin-top:40px; font-size:14px; color:var(--ink-2)}
   <p>You must be 18 or older. Online lotteries are restricted or illegal in some countries and US states; it is your responsibility to know whether you may take part where you live. The pool grows only with new tickets; if nobody joins, the remaining pool is paid out over the following weeks.</p>
 </div>
 
-<footer>Only 2 USD is an experiment. The contract is immutable; this website is just a window onto it.</footer>
+<footer>Only 2 USD is an experiment. The contract is immutable; this website is just a window onto it.<br><a href="https://x.com/only2usd" target="_blank" rel="noopener">@only2usd on X</a> · <a href="https://github.com/Only2usd/only2usd.github.io" target="_blank" rel="noopener">Source on GitHub</a></footer>
 
 </div>
 
@@ -263,13 +277,14 @@ footer{margin-top:40px; font-size:14px; color:var(--ink-2)}
 <script>
 // ===== configuration (testnet) =====
 const CFG = {
-  chainId: 84532,
-  chainName: "Base Sepolia",
-  contract: "0x9041e577b2239a0757Bf15c699146881317b39c4",
-  usdc: "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
-  explorer: "https://sepolia.basescan.org",
+  chainId: 8453,
+  chainName: "Base",
+  contract: "0x236dEA4ceD151C68cdE2D63f8C468Bc83f5f1Bb7",
+  usdc: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+  explorer: "https://basescan.org",
+  rpc: "https://mainnet.base.org",
   deployBlock: 0,
-  testnet: true
+  testnet: false
 };
 const ABI = [
   "function pool() view returns (uint256)",
@@ -294,6 +309,8 @@ const fmt = v => (Number(v) / 1e6).toLocaleString("en-US", {minimumFractionDigit
 const short = a => a.slice(0,6) + "…" + a.slice(-4);
 
 let provider, signer, account, contract, usdc, next = 0;
+let reader = null; // read-only contract, no wallet needed
+try{ reader = new ethers.Contract(CFG.contract, ABI, new ethers.JsonRpcProvider(CFG.rpc)); }catch(e){}
 
 // links
 $("contractAddr").textContent = CFG.contract;
@@ -344,37 +361,38 @@ async function connect(){
 }
 
 async function refresh(){
-  if (!contract) return;
+  const c = contract || reader;
+  if (!c) return;
   try{
-    const [pool, tickets, nd, pending, prize, mine] = await Promise.all([
-      contract.pool(), contract.ticketCount(), contract.nextDrawTime(), contract.drawPending(), contract.currentPrize(), contract.activeTickets(account)
+    const [pool, tickets, nd, pending, prize] = await Promise.all([
+      c.pool(), c.ticketCount(), c.nextDrawTime(), c.drawPending(), c.currentPrize()
     ]);
     $("pool").textContent = fmt(pool);
     $("tickets").textContent = tickets.toString();
     $("prize").textContent = fmt(prize.winnerAmount);
-    $("mine").textContent = mine.toString() + " / 25";
-    countPlayers(Number(tickets));
+    if (account){ const mine = await c.activeTickets(account); $("mine").textContent = mine.toString() + " / 25"; }
     next = Number(nd);
     const due = Math.floor(Date.now()/1000) >= next && !pending && Number(tickets) > 0 && Number(pool) > 0;
-    $("drawBtn").hidden = !due;
+    $("drawBtn").hidden = !due || !contract;
     if (pending) $("countdown").textContent = "Drawing…";
-    await loadDraws();
-  }catch(e){ setStatus(readable(e), true); }
+    countPlayers(Number(tickets), c);
+    await loadDraws(c);
+  }catch(e){ if (contract) setStatus(readable(e), true); }
 }
 
-async function countPlayers(n){
+async function countPlayers(n, c){
   try{
     const seen = new Set();
     for (let i = 0; i < n; i += 500){
-      const page = await contract.getTickets(i, Math.min(n, i + 500));
+      const page = await c.getTickets(i, Math.min(n, i + 500));
       page.forEach(a => seen.add(a.toLowerCase()));
     }
     $("players").textContent = seen.size.toString();
   }catch(e){ $("players").textContent = "—"; }
 }
 
-async function loadDraws(){
-  const logs = await contract.queryFilter(contract.filters.DrawResult(), CFG.deployBlock, "latest");
+async function loadDraws(c){
+  const logs = await c.queryFilter(c.filters.DrawResult(), CFG.deployBlock, "latest");
   const tb = $("draws");
   let paid = 0n, max = 0n;
   logs.forEach(l => { paid += l.args.winnerAmount; if (l.args.winnerAmount > max) max = l.args.winnerAmount; });
@@ -450,8 +468,8 @@ if (window.ethereum){
   window.ethereum.on && window.ethereum.on("accountsChanged", () => location.reload());
   window.ethereum.on && window.ethereum.on("chainChanged", () => location.reload());
   // silent read if already authorised
-  window.ethereum.request({method:"eth_accounts"}).then(a => { if (a && a.length) connect(); }).catch(()=>{});
-}
+  window.ethereum.request({method:"eth_accounts"}).then(a => { if (a && a.length) connect(); else refresh(); }).catch(()=>refresh());
+} else { refresh(); }
 </script>
 </body>
 </html>
