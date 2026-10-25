@@ -144,6 +144,7 @@ footer{margin-top:40px; font-size:14px; color:var(--ink-2)}
     <button class="btn" id="buyBtn">Connect wallet</button>
   </div>
   <div class="status" id="status"></div>
+  <div style="margin-top:10px"><button class="ghost" id="sponsorBtn2" style="border-color:var(--stub-ink);color:var(--stub-ink)">Support the pool with any amount</button></div>
 </div>
 
 <section>
@@ -463,6 +464,7 @@ function readable(e){
 
 $("buyBtn").addEventListener("click", buy);
 $("sponsorBtn").addEventListener("click", sponsorPool);
+$("sponsorBtn2").addEventListener("click", sponsorPool);
 $("drawBtn").addEventListener("click", runDraw);
 if (window.ethereum){
   window.ethereum.on && window.ethereum.on("accountsChanged", () => location.reload());
